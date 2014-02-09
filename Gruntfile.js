@@ -1,6 +1,8 @@
 // Generated on 2014-02-09 using generator-easyvideo 0.0.3
 'use strict';
 
+var crypto = require('crypto');
+
 module.exports = function(grunt) {
 
     // paths used in our tasks
@@ -22,44 +24,55 @@ module.exports = function(grunt) {
             tmp: {
                 expand: true,
                 cwd: tmpFolder,
-                src: ['**.*']
-            },
-            responsiveVideosTarget: {
-                expand: true,
-                cwd: tmpFolder,
-                src: ['*.{mov,mp4,webm}']
-            }
-        },
-        imagemin: {
-            videoPosters: {
-                options: {
-                    optimizationLevel: 3
-                },
-                files: [{
-                    expand: true,
-                    cwd: tmpFolder,
-                    src: ['*.{jpg,gif,png}'],
-                    dest: targetVideoPosters
-                }]
+                src: ['**/*.*']
             }
         },
 
         responsive_videos: {
-            projectVideos: {
+            webm1: {
                 options: {
                     sizes: [{
-                        width: 640,
-                        poster: true
-                    }, {
-                        width: 900,
-                        poster: true
+                        width: 300,
+                        poster: false
+                    }],
+                    encodes: [{
+                        webm: [
+                            {'-vcodec': 'libvpx'},
+                            {'-acodec': 'libvorbis'},
+                            {'-crf': '12'},
+                            {'-q:a': '100'},
+                            {'-threads': '0'}
+                        ]
                     }]
                 },
                 files: [{
                     expand: true,
-                    src: ['*.{mov,mp4}'],
+                    src: 'cappadocia.mp4',
                     cwd: srcVideos,
-                    dest: tmpFolder
+                    dest: tmpFolder+'test1'
+                }]
+            },
+            webm2: {
+                options: {
+                    sizes: [{
+                        width: 300,
+                        poster: false
+                    }],
+                    encodes: [{
+                        webm: [
+                            {'-vcodec': 'libvpx'},
+                            {'-acodec': 'libvorbis'},
+                            {'-crf': '12'},
+                            {'-q:a': '100'},
+                            {'-threads': '0'}
+                        ]
+                    }]
+                },
+                files: [{
+                    expand: true,
+                    src: 'cappadocia.mp4',
+                    cwd: srcVideos,
+                    dest: tmpFolder+'test2'
                 }]
             }
         },
@@ -69,19 +82,23 @@ module.exports = function(grunt) {
                 files: [{
                     expand: true,
                     cwd: tmpFolder,
-                    src: ['*.{webm,mp4}'],
+                    src: ['**/*.{webm,mp4}'],
                     dest: targetVideos
                 }]
             }
         },
     });
 
+    grunt.registerTask('checksum', 'Check checksums', function(){
+        grunt.log.writeln('Encode 1: ' + crypto.createHash('md5').update(grunt.file.read(targetVideos+'test1/cappadocia-300.webm')).digest('hex'));
+        grunt.log.writeln('Encode 2: ' + crypto.createHash('md5').update(grunt.file.read(targetVideos+'test2/cappadocia-300.webm')).digest('hex'));
+    });
+
     grunt.registerTask('videos', 'Generate videos from source files in ' + srcVideos, [
-        'clean:tmp',
-        'responsive_videos:projectVideos',
-        'copy:projectVideos',
-        'imagemin:videoPosters',
-        'clean:tmp'
+        'responsive_videos',
+        'copy',
+        'clean',
+        'checksum'
     ]);
 
     // Default task.
